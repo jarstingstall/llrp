@@ -1,6 +1,8 @@
 package llrp
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestItReturnsNewClientWithHostAndPortSet(t *testing.T) {
 	host := "10.0.0.29"
@@ -12,4 +14,15 @@ func TestItReturnsNewClientWithHostAndPortSet(t *testing.T) {
 	if c.Port != port {
 		t.Fatalf("Client.Port not set properly. Expected %s but got %s", port, c.Port)
 	}
+}
+
+func TestClientCanConnectToServerAndClose(t *testing.T) {
+	host := "10.0.0.29"
+	port := "5084"
+	c := NewClient(host, port)
+	err := c.Connect()
+	if err != nil {
+		t.Fatal(err)
+	}
+	c.Close()
 }
