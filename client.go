@@ -1,6 +1,7 @@
 package llrp
 
 import (
+	"errors"
 	"net"
 )
 
@@ -26,6 +27,13 @@ func (c *Client) Connect() error {
 	conn, err := net.Dial("tcp", c.Host+":"+c.Port)
 	if err != nil {
 		return err
+	}
+	m, err := readMessageHeader(conn)
+	if err != nil {
+		return err
+	}
+	if m.Type != ReaderEventNotificationMsg {
+		return errors.New("Expected ReaderEventNotification message but got " + string(m.Type))
 	}
 	c.conn = conn
 	return nil
