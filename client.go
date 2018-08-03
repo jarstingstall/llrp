@@ -28,6 +28,7 @@ func (c *Client) Connect() error {
 	if err != nil {
 		return err
 	}
+
 	m, err := readMessageHeader(conn)
 	if err != nil {
 		return err
@@ -35,6 +36,15 @@ func (c *Client) Connect() error {
 	if m.Type != ReaderEventNotificationMsg {
 		return errors.New("Expected ReaderEventNotification message but got " + string(m.Type))
 	}
+
+	p, err := readParameterHeader(conn)
+	if err != nil {
+		return err
+	}
+	if p.Type != ReaderEventNotificationDataParam {
+		return errors.New("Expected ReaderEventNotificationData parameter but got " + string(p.Type))
+	}
+
 	c.conn = conn
 	return nil
 }
