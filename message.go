@@ -1,11 +1,6 @@
 package llrp
 
-import (
-	"encoding/binary"
-	"net"
-)
-
-const ReaderEventNotificationMsg = 63
+const ReaderEventNotificationType = 63
 
 // MessageHeader provides information about a message
 type MessageHeader struct {
@@ -14,15 +9,7 @@ type MessageHeader struct {
 	ID     uint32
 }
 
-func readMessageHeader(conn net.Conn) (MessageHeader, error) {
-	b := make([]byte, 10)
-	_, err := conn.Read(b)
-	if err != nil {
-		return MessageHeader{}, err
-	}
-	return MessageHeader{
-		Type:   b[1],
-		Length: binary.BigEndian.Uint32(b[2:6]),
-		ID:     binary.BigEndian.Uint32(b[6:]),
-	}, nil
+type ReaderEventNotification struct {
+	MessageHeader
+	ReaderEventNotificationData ReaderEventNotificationData
 }
