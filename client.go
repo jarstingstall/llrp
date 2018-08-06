@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"unicode/utf8"
 )
 
 // Client used to send/parse messages
@@ -56,6 +57,16 @@ func (c *Client) Connect() error {
 // Close will close the underlying tcp connection and
 // return any errors
 func (c *Client) Close() error {
+	b := []byte{4, CloseConnectionType, 0, 0, 0, 10, 0, 0, 0, 1}
+	_, err := c.conn.Write(b)
+	if err != nil {
+		return err
+	}
+	res, err := c.readCloseConnectionResponse()
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%+v\n", res)
 	return c.conn.Close()
 }
 
@@ -161,4 +172,69 @@ func (c *Client) readTimestamp() (Timestamp, error) {
 		ParameterHeader: ph,
 		Microseconds:    binary.BigEndian.Uint64(b),
 	}, nil
+}
+
+func (c *Client) readCloseConnectionResponse() (CloseConnectionResponse, error) {
+	mh, err := c.readMessageHeader()
+	if err != nil {
+		return CloseConnectionResponse{}, err
+	}
+	if mh.Type != CloseConnectionResponseType {
+		return CloseConnectionResponse{}, errors.New("expected CloseConnectionResponse message")
+	}
+
+	status, err := c.readLLRPStatus()
+	if err != nil {
+		return CloseConnectionResponse{}, err
+	}
+
+	return CloseConnectionResponse{
+		MessageHeader: mh,
+		LLRPStatus:    status,
+	}, nil
+}
+
+func (c *Client) readLLRPStatus() (LLRPStatus, error) {
+	ph, err := c.readParameterHeader()
+	if err != nil {
+		return LLRPStatus{}, err
+	}
+
+	b := make([]byte, 4)
+	_, err = c.conn.Read(b)
+	if err != nil {
+		return LLRPStatus{}, err
+	}
+
+	statusCode := binary.BigEndian.Uint16(b[:2])
+	edbc := binary.BigEndian.Uint16(b[2:])
+
+	status := LLRPStatus{
+		ParameterHeader:           ph,
+		StatusCode:                statusCode,
+		ErrorDescriptionByteCount: edbc,
+	}
+
+	// Success status code
+	if statusCode == 0 {
+		return status, nil
+	}
+
+	if edbc > 0 {
+		b := make([]byte, edbc)
+		_, err = c.conn.Read(b)
+		if err != nil {
+			return status, err
+		}
+
+		var errDesc []rune
+		for len(b) > 0 {
+			r, size := utf8.DecodeRune(b)
+			errDesc = append(errDesc, r)
+			b = b[size:]
+		}
+		status.ErrorDescription = string(errDesc)
+	}
+
+	return status, nil
 }

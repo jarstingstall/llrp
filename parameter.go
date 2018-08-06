@@ -23,3 +23,24 @@ type ConnectionAttemptEvent struct {
 	ParameterHeader
 	Status uint16
 }
+
+type LLRPStatus struct {
+	ParameterHeader
+	StatusCode                uint16
+	ErrorDescriptionByteCount uint16
+	ErrorDescription          string
+	FieldError                FieldError
+	ParameterError            ParameterError
+}
+
+type FieldError struct {
+	ParameterHeader
+	FieldNum  uint16
+	ErrorCode uint16
+}
+
+type ParameterError struct {
+	ParameterHeader
+	ParmeterType uint16
+	ErrorCode    uint16
+}
