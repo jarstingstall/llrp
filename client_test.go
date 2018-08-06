@@ -24,5 +24,8 @@ func TestClientCanConnectToServerAndClose(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	c.Close()
+	err = c.Close()
+	if err != nil {
+		t.Fatal(err)
+	}
 }

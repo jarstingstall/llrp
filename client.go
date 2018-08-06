@@ -15,8 +15,7 @@ type Client struct {
 	conn net.Conn
 }
 
-// NewClient returns a new initialized Client or an
-// error if unable to make a connection
+// NewClient returns a new initialized Client
 func NewClient(host, port string) *Client {
 	return &Client{
 		Host: host,
@@ -57,7 +56,7 @@ func (c *Client) Connect() error {
 // Close will close the underlying tcp connection and
 // return any errors
 func (c *Client) Close() error {
-	b := []byte{4, CloseConnectionType, 0, 0, 0, 10, 0, 0, 0, 1}
+	b := newCloseConnection()
 	_, err := c.conn.Write(b)
 	if err != nil {
 		return err

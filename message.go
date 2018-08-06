@@ -16,6 +16,12 @@ type ReaderEventNotification struct {
 	ReaderEventNotificationData ReaderEventNotificationData
 }
 
+type CloseConnection []byte
+
+func newCloseConnection() []byte {
+	return []byte{4, CloseConnectionType, 0, 0, 0, 10, 0, 0, 0, 1}
+}
+
 type CloseConnectionResponse struct {
 	MessageHeader
 	LLRPStatus LLRPStatus
