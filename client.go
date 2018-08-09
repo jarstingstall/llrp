@@ -3,7 +3,7 @@ package llrp
 import (
 	"encoding/binary"
 	"errors"
-	"fmt"
+	"log"
 	"net"
 	"unicode/utf8"
 )
@@ -33,6 +33,7 @@ func (c *Client) Connect() error {
 	c.conn = conn
 
 	msg, err := c.readReaderEventNotifaction()
+	log.Printf("%+v\n", msg)
 	if err != nil {
 		return err
 	}
@@ -49,7 +50,6 @@ func (c *Client) Connect() error {
 		return err
 	}
 
-	fmt.Printf("%+v\n", msg)
 	return nil
 }
 
@@ -61,11 +61,17 @@ func (c *Client) Close() error {
 	if err != nil {
 		return err
 	}
+
 	res, err := c.readCloseConnectionResponse()
+	log.Printf("%+v\n", res)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v\n", res)
+
+	if res.LLRPStatus.ErrorDescription != "" {
+		return errors.New(res.LLRPStatus.ErrorDescription)
+	}
+
 	return c.conn.Close()
 }
 
@@ -219,6 +225,8 @@ func (c *Client) readLLRPStatus() (LLRPStatus, error) {
 		return status, nil
 	}
 
+	// If an error description is returned, parse
+	// the bytes into a utf8 string
 	if edbc > 0 {
 		b := make([]byte, edbc)
 		_, err = c.conn.Read(b)
